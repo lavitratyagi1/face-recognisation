@@ -1,6 +1,8 @@
 import cv2
 import os
 import uuid
+import csv
+from datetime import datetime
 
 # Load pre-trained face detection model
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -25,6 +27,14 @@ for filename in os.listdir(image_folder):
             roi = gray[y:y+h, x:x+w]
             known_faces.append(roi)
             known_names.append(os.path.splitext(filename)[0])  # Extract name from filename
+
+# Create a CSV file to store user details
+csv_file = 'user_details.csv'
+csv_header = ['Name', 'Timestamp']
+if not os.path.isfile(csv_file):
+    with open(csv_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(csv_header)
 
 # Capture video from webcam
 cap = cv2.VideoCapture(0)
@@ -59,6 +69,11 @@ while True:
                 unknown_face_path = os.path.join('unknown_faces', f'person_{str(uuid.uuid4())[:8]}.jpg')
                 cv2.imwrite(unknown_face_path, roi_gray)
                 cv2.putText(frame, 'Unknown', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+
+                # Add user details to CSV file
+                with open(csv_file, 'a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(['Unknown', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
 
             # Draw a rectangle around the face
             cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
